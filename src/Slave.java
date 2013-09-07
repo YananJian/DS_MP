@@ -38,8 +38,18 @@ public class Slave {
                     char cmd = msg.cmd;
                     //attempt to process
                     MigratableProcess process = new MigratableProcess();
-		    // TODO: depending on the action, do stuff
-		    // TODO: report result back to manager
+		    // TODO: depending on the action, do stuff; report result back to manager
+
+		    // Case 1a: start thread from scratch; report success/failure
+		    // Case 1b: start thread given process environment; report success/failure
+
+		    // Case 2: kill thread; report success/failure
+
+		    // Case 3: suspend thread; report success/failure
+
+		    // Case 4: suspend thread and report process environment (new message class); report success/failure
+
+		    // Case 5: resume existing thread given process environment; report success/failure
                 }
             }
         }
