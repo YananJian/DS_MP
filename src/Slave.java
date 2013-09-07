@@ -39,6 +39,7 @@ public class Slave {
                     //attempt to process
                     MigratableProcess process = new MigratableProcess();
 		    // TODO: depending on the action, do stuff
+		    // TODO: report result back to manager
                 }
             }
         }
