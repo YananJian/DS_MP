@@ -1,0 +1,15 @@
+import java.io.*;
+import java.net.*;
+import java.net.Socket;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+
+public class Slave {
+
+    public static void main(String[] args) throws IOException {
+	
+	
+
+    }
+
+}
