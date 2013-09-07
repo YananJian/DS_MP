@@ -1,3 +1,5 @@
+package common;
+
 import java.io.PrintStream;
 import java.io.EOFException;
 import java.io.DataInputStream;
@@ -6,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.Thread;
 import java.lang.InterruptedException;
+import java.sql.Time;
 
 public class GrepProcess implements MigratableProcess
 {
@@ -24,7 +27,8 @@ public class GrepProcess implements MigratableProcess
 		
 		query = args[0];
 		inFile = new TransactionalFileInputStream(args[1]);
-		outFile = new TransactionalFileOutputStream(args[2], false);
+		outFile = new TransactionalFileOutputStream(args[2]);
+		System.out.format("args:%s, %s, %s", args[0], args[1], args[2]);
 	}
 
 	public void run()
@@ -62,7 +66,18 @@ public class GrepProcess implements MigratableProcess
 	public void suspend()
 	{
 		suspending = true;
-		while (suspending);
+		while (suspending){ try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}}
+	}
+	
+	public void terminate()
+	{
+		suspending = false;
+		
 	}
 
 }
