@@ -5,12 +5,20 @@ import java.net.Socket;
 public class Slave {
 
     int slave_id;
+    int manager_IP;
 
     public void set_slave_id(int id) {
         this.slave_id = id;
     }
 
+    public void set_manager_IP(int ip) {
+        this.manager_IP = ip;
+    }
+
     public static void main(String[] args) throws IOException {
+
+	slave_id = args[0];
+	manager_IP = args[1];
 
         try {
             // listen to socket
@@ -29,7 +37,8 @@ public class Slave {
                     char act = msg.act;
                     char cmd = msg.cmd;
                     //attempt to process
-                    Process process = new Process(proc_id, act, cmd);
+                    MigratableProcess process = new MigratableProcess();
+		    // TODO: depending on the action, do stuff
                 }
             }
         }
