@@ -6,8 +6,8 @@ public class Slave {
 
     int slave_id;    
 
-    public static void set_slave_id(int id) {
-	slave_id = id;
+    public void set_slave_id(int id) {
+	this.slave_id = id;
     }
 
     public static void main(String[] args) throws IOException {
