@@ -34,7 +34,8 @@ public class Slave_T {
     }
 
     // TODO: implement
-    public void process(ObjectOutputStream oos, Msg msg) {
+
+    public void process(ObjectOutputStream oos, Msg msg) throws IOException {
 	String act = msg.get_action();
 	String cmd = msg.get_cmd();
 	String to_ip = msg.get_toip();
@@ -44,6 +45,7 @@ public class Slave_T {
 	// send reply to server
 	this.set_status(Constants.Status.BUSY);
 	Msg reply = new Msg("", "");
+
 	reply.set_status(this.get_status()); 
 	this.writeToServer(oos, reply);
 	return;
@@ -63,9 +65,10 @@ public class Slave_T {
 	}
     }
 	
-    public void connect() throws InterruptedException{
+    public void connect() throws InterruptedException, ClassNotFoundException{
 	try {
 	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
+
 	    ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
 	    ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
 	    Msg greeting = new Msg("", "");
@@ -81,7 +84,7 @@ public class Slave_T {
 	}	
     }
     
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, ClassNotFoundException {
 	// TODO Auto-generated method stub
 	Slave_T slave = new Slave_T();
 	slave.set_status(Constants.Status.IDLE);
