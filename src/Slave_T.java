@@ -43,9 +43,9 @@ public class Slave_T {
 
 	// write response to server
 	this.set_status(Constants.Status.BUSY);
-	Msg msg = new Msg("", "");
-	msg.set_status(this.get_status()); 
-	this.writeToServer(sock, msg);
+	Msg reply = new Msg("", "");
+	reply.set_status(this.get_status()); 
+	this.writeToServer(sock, reply);
 	return;
     }
 
