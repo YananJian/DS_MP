@@ -8,6 +8,7 @@ public class Msg {
 	private String slave_id;
 	private String to_ip;
 	private int to_port;
+	private Constants.Status status;
 	
 	public Msg(String act, String cmd)
 	{
@@ -19,6 +20,14 @@ public class Msg {
 		
 		this.slave_id = sid;
 		
+	}
+	
+	public void set_status(Constants.Status s){
+		this.status = s;		
+	}
+	
+	public Constants.Status get_status(){
+		return this.status;		
 	}
 	
 	public String get_sid(){
