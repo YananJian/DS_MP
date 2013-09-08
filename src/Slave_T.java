@@ -3,7 +3,7 @@ import java.net.*;
 
 public class Slave_T {
 
-    int slave_id;
+    String slave_id;
     String manager_IP = "";
     int manager_port = 0;
     
@@ -20,6 +20,12 @@ public class Slave_T {
 
     // TODO: implement
     public void process(Msg msg) {
+	int proc_id = msg.get_procid();
+	String act = msg.get_action();
+	String cmd = msg.get_cmd();
+	String to_ip = msg.get_toid();
+	String to_ip = msg.get_toip();
+	int to_port = msg.get_toport();
 	return;
     }
 
@@ -34,8 +40,8 @@ public class Slave_T {
 	ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
 	while (true) { 
 	    Msg msg = (Msg) ois.readObject();
-	    int intended_slave_id = msg.slave_id;
-	    if (intended_slave_id == slave_id) {
+	    String intended_slave_id = msg.slave_id;
+	    if (intended_slave_id.equals(slave_id)) {
 		slave.process(msg);
 	    }
 	}
