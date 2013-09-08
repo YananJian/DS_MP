@@ -9,6 +9,14 @@ public class Slave_T {
     private int manager_port = 0;
     private Constants.status status;
 	
+    public void set_status(Constants.status stat) {
+	self.status = stat;
+    }
+
+    public Constants.status get_status() {
+	return self.status;
+    }
+
     public boolean argValidate(String [] args){
 	if (args.length == 2){
 	    if ((!args[0].equals("-c")) && (args[1].contains(":"))){
@@ -19,19 +27,11 @@ public class Slave_T {
 	return false;
     }
 
-    public void set_status(Constants.status stat) {
-	self.status = stat;
-    }
-
-    public Constants.status get_status() {
-	return self.status;
-    }
-
     // TODO: implement
     public void process(Msg msg) {
 	String act = msg.get_action();
 	String cmd = msg.get_cmd();
-	String to_ip = msg.get_toid();
+	String to_id = msg.get_toid();
 	String to_ip = msg.get_toip();
 	int to_port = msg.get_toport();
 	return;
@@ -57,7 +57,6 @@ public class Slave_T {
 	
     public void connect(){
 	try {
-	    slave.set_status(IDLE);
 	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
 	    slave.writeToServer(sock);
 	    slave.readFromServer(sock);	               
@@ -67,13 +66,13 @@ public class Slave_T {
 	} catch (IOException e) {
 	    // TODO Auto-generated catch block
 	    e.printStackTrace();
-	}
-	
+	}	
     }
     
     public static void main(String[] args) {
 	// TODO Auto-generated method stub
 	Slave_T slave = new Slave_T();
+	slave.set_status(IDLE);
 	if (slave.argValidate(args)){
 	    slave.manager_IP = args[1].split(":")[0];
 	    slave.manager_port = Integer.parseInt(args[1].split(":")[1]);
