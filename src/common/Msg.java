@@ -2,7 +2,6 @@ package common;
 
 public class Msg {
 
-	private int proc_id;
 	private String act;
 	private String cmd;
 	private String slave_id;
@@ -14,11 +13,11 @@ public class Msg {
 	{
 		this.act = act;
 		this.cmd = cmd;
-	}
+	}        
 	
-	public void set_sid(String sid){
+	public void set_slaveid(String slaveid){
 		
-		this.slave_id = sid;
+		this.slave_id = slaveid;
 		
 	}
 	

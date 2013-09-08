@@ -20,7 +20,6 @@ public class Slave_T {
 
     // TODO: implement
     public void process(Msg msg) {
-	int proc_id = msg.get_procid();
 	String act = msg.get_action();
 	String cmd = msg.get_cmd();
 	String to_ip = msg.get_toid();
