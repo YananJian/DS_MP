@@ -3,23 +3,30 @@ package common;
 public class Msg {
 
 	private int proc_id;
-	private char act;
+	private String act;
 	private String cmd;
-	private int slave_id;
+	private String slave_id;
+	private String to_ip;
+	private int to_port;
 	
-	Msg(int sid, char act, String cmd)
+	public Msg(String act, String cmd)
 	{
-		this.slave_id = sid;
 		this.act = act;
 		this.cmd = cmd;
 	}
 	
-	public int get_sid(){
+	public void set_sid(String sid){
+		
+		this.slave_id = sid;
+		
+	}
+	
+	public String get_sid(){
 		
 		return this.slave_id;
 	}
 	
-	public char get_action(){
+	public String get_action(){
 		
 		return this.act;
 	}
@@ -28,4 +35,13 @@ public class Msg {
 		
 		return this.cmd;
 	} 
+	
+	public String get_toip(){
+		return this.to_ip;
+	}
+	
+	public int get_toport(){
+		
+		return this.to_port;
+	}
 }
