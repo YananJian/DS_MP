@@ -64,7 +64,7 @@ public class ProcessManager implements Runnable{
 		
 	}
 	
-	private void dispathMsg(Msg msg)
+	private void dispatchMsg(Msg msg)
 	{
 		String ip_port = this.ideal_ipport.poll();
 		
