@@ -43,13 +43,13 @@ public class Slave_T {
 
 	// write response to server
 	this.set_status(Constants.Status.BUSY);
-	this.writeToServer(sock);
+	Msg msg = new Msg("", "");
+	msg.set_status(this.get_status()); 
+	this.writeToServer(sock, msg);
 	return;
     }
 
-    public void writeToServer(Socket sock) throws IOException {
-	Msg msg = new Msg("", "");
-	msg.set_status(this.get_status()); 
+    public void writeToServer(Socket sock, Msg msg) throws IOException {
 	ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
 	oos.writeObject(msg);
     }
@@ -68,7 +68,9 @@ public class Slave_T {
     public void connect() throws InterruptedException{
 	try {
 	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
-	    this.writeToServer(sock);
+	    Msg msg = new Msg("", "");
+	    msg.set_status(this.get_status()); 
+	    this.writeToServer(sock, msg);
 	    slave.readFromServer(sock);	               
 	} catch (UnknownHostException e) {
 	    // TODO Auto-generated catch block
