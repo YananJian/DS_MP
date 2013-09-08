@@ -34,7 +34,7 @@ public class Slave_T {
     }
 
     // TODO: implement
-    public void process(Msg msg) {
+    public void process(Msg msg, Socket sock) throws IOException {
 	String act = msg.get_action();
 	String cmd = msg.get_cmd();
 	String to_ip = msg.get_toip();
@@ -42,12 +42,14 @@ public class Slave_T {
 	// cases
 
 	// write response to server
+	this.set_status(Constants.Status.BUSY);
+	Msg reply = new Msg("", "");
+	msg.set_status(this.get_status()); 
+	this.writeToServer(sock, reply);
 	return;
     }
 
-    public void writeToServer(Socket sock) throws IOException {
-	Msg msg = new Msg("", "");
-	msg.set_status(this.get_status()); 
+    public void writeToServer(Socket sock, Msg msg) throws IOException {
 	ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
 	oos.writeObject(msg);
     }
@@ -58,7 +60,7 @@ public class Slave_T {
 	    Msg msg = (Msg) ois.readObject();
 	    String intended_slave_id = msg.get_sid();
 	    if (intended_slave_id.equals(slave_id)) {
-		this.process(msg);
+		this.process(msg, sock);
 	    }
 	}
     }
@@ -66,8 +68,12 @@ public class Slave_T {
     public void connect() throws InterruptedException, ClassNotFoundException{
 	try {
 	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
-	    this.writeToServer(sock);
+
+	    Msg msg = new Msg("", "");
+	    msg.set_status(this.get_status()); 
+	    this.writeToServer(sock, msg);
 	    this.readFromServer(sock);	               
+
 	} catch (UnknownHostException e) {
 	    // TODO Auto-generated catch block
 	    e.printStackTrace();
