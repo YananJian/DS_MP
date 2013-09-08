@@ -63,11 +63,11 @@ public class Slave_T {
 	}
     }
 	
-    public void connect() throws InterruptedException{
+    public void connect() throws InterruptedException, ClassNotFoundException{
 	try {
 	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
 	    this.writeToServer(sock);
-	    slave.readFromServer(sock);	               
+	    this.readFromServer(sock);	               
 	} catch (UnknownHostException e) {
 	    // TODO Auto-generated catch block
 	    e.printStackTrace();
@@ -77,7 +77,7 @@ public class Slave_T {
 	}	
     }
     
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, ClassNotFoundException {
 	// TODO Auto-generated method stub
 	Slave_T slave = new Slave_T();
 	slave.set_status(Constants.Status.IDLE);

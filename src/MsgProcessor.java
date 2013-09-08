@@ -114,10 +114,11 @@ public class MsgProcessor implements Runnable{
 				Msg m = (Msg) o;
 				if (m.get_status() == Constants.Status.IDLE)
 				{
+					System.out.println("Slave IDLE, sid:"+sid);
 					pm.ideal_sids.add(sid);
 					pm.set_sid_status(sid, Constants.Status.IDLE);
 				}
-			
+				else{ System.out.println("Slave "+m.get_status()+" sid:%s"+sid);}
 				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
