@@ -41,7 +41,7 @@ public class Slave_T {
 	int to_port = msg.get_toport();
 	// cases
 
-	// write response to server
+	// send reply to server
 	this.set_status(Constants.Status.BUSY);
 	Msg reply = new Msg("", "");
 	reply.set_status(this.get_status()); 
@@ -68,9 +68,9 @@ public class Slave_T {
 	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
 	    ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
 	    ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
-	    Msg reply = new Msg("", "");
-	    reply.set_status(this.get_status()); 
-	    this.writeToServer(oos, reply);
+	    Msg greeting = new Msg("", "");
+	    greeting.set_status(this.get_status()); 
+	    this.writeToServer(oos, greeting);
 	    this.readFromServer(ois, oos);	               
 	} catch (UnknownHostException e) {
 	    // TODO Auto-generated catch block
