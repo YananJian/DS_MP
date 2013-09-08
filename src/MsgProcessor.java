@@ -91,21 +91,21 @@ public class MsgProcessor implements Runnable{
 				
 				System.out.format("cli ip:%s\t cli port:%d\n", cli_ip, cli_port);
 				String sid = pm.gen_slaveid(cli_ip, cli_port);
-				//ObjectInputStream inputstm = this.slave_inputstm.get(sid);
+				ObjectInputStream inputstm = this.slave_inputstm.get(sid);
 				//ObjectInputStream inputstm = new ObjectInputStream(cli_sock.getInputStream());
 				//System.out.println(inputstm == null);
-				//if (inputstm == null)
-				//{
-				//	System.out.println(cli_sock.getInputStream());
-				//	inputstm = new ObjectInputStream(cli_sock.getInputStream());
-				//	this.slave_inputstm.put(sid, inputstm);
-				//}
+				if (inputstm == null)
+				{
+					System.out.println(cli_sock.getInputStream());
+					inputstm = new ObjectInputStream(cli_sock.getInputStream());
+					this.slave_inputstm.put(sid, inputstm);
+				}
 				String ip_port = pm.get_sidmap(sid);
 				if (ip_port == null)
 					pm.add_sidmap(sid, cli_ip+":"+String.valueOf(cli_port));
 			
-				//Object o = inputstm.readObject();
-				Object o = cli_sock.getInputStream().read();
+				Object o = inputstm.readObject();
+				//Object o = cli_sock.getInputStream().read();
 				if (!(o instanceof Msg))
 				{
 					System.out.println("Slave is not sending a Msg");
@@ -122,10 +122,10 @@ public class MsgProcessor implements Runnable{
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}// catch (ClassNotFoundException e) {
+			} catch (ClassNotFoundException e) {
 				// TODO Auto-generated catch block
-			//	e.printStackTrace();
-			//}
+				e.printStackTrace();
+			}
 		}
 	}
 

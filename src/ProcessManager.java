@@ -78,7 +78,7 @@ public class ProcessManager implements Runnable{
 	{
 		String sid = this.ideal_sids.poll();
 		String ip_port = this.sid_ipport.get(sid);
-		msg.set_sid(sid);
+		msg.set_slaveid(sid);
 		msg.set_to_ip(ip_port.split(":")[0]);
 		msg.set_to_port(Integer.parseInt(ip_port.split(":")[1]));
 		System.out.format("Dispatching Msg, ip:%s, port:%d", msg.get_toip(), msg.get_toport());

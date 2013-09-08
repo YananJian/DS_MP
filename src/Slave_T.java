@@ -1,20 +1,26 @@
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.*;
+
 import common.Constants;
+import common.Msg;
+
+import java.io.*;
+
 
 public class Slave_T {
 
     private String slave_id;
     private String manager_IP = "";
     private int manager_port = 0;
-    private Constants.status status;
+    private Constants.Status status;
 	
-    public void set_status(Constants.status stat) {
-	self.status = stat;
+    public void set_status(Constants.Status stat) {
+	this.status = stat;
     }
 
-    public Constants.status get_status() {
-	return self.status;
+    public Constants.Status get_status() {
+	return this.status;
     }
 
     public boolean argValidate(String [] args){
@@ -31,34 +37,33 @@ public class Slave_T {
     public void process(Msg msg) {
 	String act = msg.get_action();
 	String cmd = msg.get_cmd();
-	String to_id = msg.get_toid();
 	String to_ip = msg.get_toip();
 	int to_port = msg.get_toport();
 	return;
     }
 
-    public void writeToServer(Socket sock) {
+    public void writeToServer(Socket sock) throws IOException {
 	Msg msg = new Msg("", "");
-	msg.set_status(slave.get_status()); 
+	msg.set_status(this.get_status()); 
 	ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
 	oos.writeObject(msg);
     }
 
-    public void readFromServer(Socket sock) {
+    public void readFromServer(Socket sock) throws IOException, ClassNotFoundException {
 	ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
 	while (true) { 
 	    Msg msg = (Msg) ois.readObject();
-	    String intended_slave_id = msg.slave_id;
+	    String intended_slave_id = msg.get_sid();
 	    if (intended_slave_id.equals(slave_id)) {
-		slave.process(msg);
+		this.process(msg);
 	    }
 	}
     }
 	
-    public void connect(){
+    public void connect() throws InterruptedException{
 	try {
 	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
-	    //slave.writeToServer(sock);
+	    this.writeToServer(sock);
 	    //slave.readFromServer(sock);	               
 	} catch (UnknownHostException e) {
 	    // TODO Auto-generated catch block
@@ -69,15 +74,16 @@ public class Slave_T {
 	}	
     }
     
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
 	// TODO Auto-generated method stub
 	Slave_T slave = new Slave_T();
-	slave.set_status(IDLE);
+	slave.set_status(Constants.Status.IDLE);
 	if (slave.argValidate(args)){
 	    slave.manager_IP = args[1].split(":")[0];
 	    slave.manager_port = Integer.parseInt(args[1].split(":")[1]);
 	}
 	slave.connect();
+	
     }
     
 }

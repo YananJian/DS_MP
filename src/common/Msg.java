@@ -1,6 +1,6 @@
 package common;
 
-public class Msg {
+public class Msg implements java.io.Serializable{
 
 	private String act;
 	private String cmd;
@@ -16,7 +16,6 @@ public class Msg {
 	}        
 	
 	public void set_slaveid(String slaveid){
-		
 		this.slave_id = slaveid;
 		
 	}
