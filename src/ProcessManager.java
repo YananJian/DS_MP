@@ -16,24 +16,34 @@ import java.net.*;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.concurrent.*;
+
+import common.Constants;
 import common.Msg;
 
 public class ProcessManager implements Runnable{
 	
 	private HashMap<String, String> sid_ipport = new HashMap<String, String>();
-	private HashMap<String, String> sid_status = new HashMap<String, String>();
-	private static ProcessManager pm = null;
-	public ConcurrentLinkedQueue<Msg> msgQueue = new ConcurrentLinkedQueue<Msg>();
-	public ConcurrentLinkedQueue<String> ideal_ipport = new ConcurrentLinkedQueue<String>();
-	MsgProcessor mp = MsgProcessor.getInstance();
+	private HashMap<String, Constants.Status> sid_status = new HashMap<String, Constants.Status>();
 	
+	private static ProcessManager pm = new ProcessManager();
+	
+	public ConcurrentLinkedQueue<Msg> msgQueue = new ConcurrentLinkedQueue<Msg>();
+	public ConcurrentLinkedQueue<String> ideal_sids = new ConcurrentLinkedQueue<String>();
+	MsgProcessor mp = MsgProcessor.getInstance();
+	CmdProcessor cp = CmdProcessor.getInstance();
+	
+	private ProcessManager(){}
 	public static synchronized ProcessManager getInstance()
 	{
-		if (pm == null)
-			pm = new ProcessManager();
 		return pm;
 	}
-
+	
+	public void set_sid_status(String sid, Constants.Status status)
+	{
+		this.sid_status.put(sid, status);
+		
+	}
+	
 	public boolean argValidate(String [] args){
 		return true;
 	}
@@ -55,7 +65,7 @@ public class ProcessManager implements Runnable{
 			mdEnc = MessageDigest.getInstance("MD5");
 			String cli_info = ip + String.valueOf(port);
 			mdEnc.update(cli_info.getBytes(), 0, cli_info.length());
-			md5 = new BigInteger(1, mdEnc.digest()).toString(16);	
+			md5 = mdEnc.digest().toString();
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -66,28 +76,39 @@ public class ProcessManager implements Runnable{
 	
 	private void dispatchMsg(Msg msg)
 	{
-		String ip_port = this.ideal_ipport.poll();
-		
+		String sid = this.ideal_sids.poll();
+		String ip_port = this.sid_ipport.get(sid);
+		msg.set_sid(sid);
+		msg.set_to_ip(ip_port.split(":")[0]);
+		msg.set_to_port(Integer.parseInt(ip_port.split(":")[1]));
+		System.out.format("Dispatching Msg, ip:%s, port:%d", msg.get_toip(), msg.get_toport());
+		mp.send2slave(msg);
 	}
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		ProcessManager pm = ProcessManager.getInstance();
-		if (!pm.argValidate(args)){
+		ProcessManager _pm = ProcessManager.getInstance();
+		if (!_pm.argValidate(args)){
 			System.out.println("Argument Error");
 			return;
 		}
-		Thread mt = new Thread(pm.mp);
+		Thread mt = new Thread(_pm.mp);
+		Thread ct = new Thread(_pm.cp);
 		mt.start();
+		ct.start();
 		
 	}
 
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
-		Msg msg = this.msgQueue.poll();
-		System.out.format("cmds:%s, action: %s", 
-				           msg.get_cmd(), msg.get_action());
+		while (true)
+		{
+			Msg msg = this.msgQueue.poll();
+			System.out.format("cmds:%s, action: %s", 
+				           		msg.get_cmd(), msg.get_action());
+			this.dispatchMsg(msg);
+		}
 	}
 
 	

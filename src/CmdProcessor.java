@@ -3,7 +3,15 @@ import java.io.*;
 import common.Msg;
 
 public class CmdProcessor implements Runnable{
+	
+	private static CmdProcessor cp = new CmdProcessor();
 
+	private CmdProcessor(){};
+	public static synchronized CmdProcessor getInstance()
+	{
+		return cp;
+	}
+	
 	@Override
 	public void run() {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -30,5 +38,6 @@ public class CmdProcessor implements Runnable{
 			
 		}
 	}
+	
 
 }

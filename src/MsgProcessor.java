@@ -1,5 +1,6 @@
 import common.Msg;
 import common.Constants;
+
 import java.io.IOException;
 import java.net.*;
 import java.util.HashMap;
@@ -8,14 +9,14 @@ import java.io.*;
 public class MsgProcessor implements Runnable{
 
 	private ProcessManager pm = ProcessManager.getInstance();
-	private static MsgProcessor mp = null;
+	private static MsgProcessor mp = new MsgProcessor();
 	private ObjectInputStream input;
 	ServerSocket server_sock = null;
 	private HashMap<String, Socket> slave_sockets;
 	private HashMap<String, ObjectInputStream> slave_inputstm;
 	private HashMap<String, ObjectOutputStream> slave_outputstm;
 	
-	public MsgProcessor()
+	private MsgProcessor()
 	{
 		slave_sockets = new HashMap<String, Socket>();
 		slave_inputstm = new HashMap<String, ObjectInputStream>();
@@ -24,8 +25,6 @@ public class MsgProcessor implements Runnable{
 	
 	public static synchronized MsgProcessor getInstance()
 	{
-		if (mp == null)
-			mp = new MsgProcessor();
 		return mp;
 	}
 	
@@ -45,6 +44,7 @@ public class MsgProcessor implements Runnable{
 					this.slave_outputstm.put(msg.get_sid(), outputstm);
 				}
 				outputstm.writeObject(msg);
+				System.out.println("Slave received msg");
 				outputstm.flush();
 			}
 		} catch (UnknownHostException e) {
@@ -91,15 +91,41 @@ public class MsgProcessor implements Runnable{
 				
 				System.out.format("cli ip:%s\t cli port:%d\n", cli_ip, cli_port);
 				String sid = pm.gen_slaveid(cli_ip, cli_port);
+				//ObjectInputStream inputstm = this.slave_inputstm.get(sid);
+				//ObjectInputStream inputstm = new ObjectInputStream(cli_sock.getInputStream());
+				//System.out.println(inputstm == null);
+				//if (inputstm == null)
+				//{
+				//	System.out.println(cli_sock.getInputStream());
+				//	inputstm = new ObjectInputStream(cli_sock.getInputStream());
+				//	this.slave_inputstm.put(sid, inputstm);
+				//}
 				String ip_port = pm.get_sidmap(sid);
 				if (ip_port == null)
 					pm.add_sidmap(sid, cli_ip+":"+String.valueOf(cli_port));
+			
+				//Object o = inputstm.readObject();
+				Object o = cli_sock.getInputStream().read();
+				if (!(o instanceof Msg))
+				{
+					System.out.println("Slave is not sending a Msg");
+					continue;
+				}
+				Msg m = (Msg) o;
+				if (m.get_status() == Constants.Status.IDLE)
+				{
+					pm.ideal_sids.add(sid);
+					pm.set_sid_status(sid, Constants.Status.IDLE);
+				}
 			
 				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}
+			}// catch (ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+			//	e.printStackTrace();
+			//}
 		}
 	}
 

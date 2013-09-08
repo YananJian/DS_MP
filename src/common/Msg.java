@@ -22,6 +22,16 @@ public class Msg {
 		
 	}
 	
+	public void set_to_ip(String ip)
+	{
+		this.to_ip = ip;
+	}
+	
+	public void set_to_port(int port)
+	{
+		this.to_port = port;
+	}
+	
 	public void set_status(Constants.Status s){
 		this.status = s;		
 	}
