@@ -58,8 +58,8 @@ public class Slave_T {
     public void connect(){
 	try {
 	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
-	    slave.writeToServer(sock);
-	    slave.readFromServer(sock);	               
+	    //slave.writeToServer(sock);
+	    //slave.readFromServer(sock);	               
 	} catch (UnknownHostException e) {
 	    // TODO Auto-generated catch block
 	    e.printStackTrace();
