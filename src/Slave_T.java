@@ -23,9 +23,11 @@ public class Slave_T {
 	return;
     }
 
-    // TODO: implement
     public void writeToServer(Socket sock) {
-	reutrn;
+	Msg msg = new Msg("", "");
+	msg.set_status(IDLE); 
+	ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
+	oos.writeObject(msg);
     }
 
     public void readFromServer(Socket sock) {
