@@ -34,7 +34,7 @@ public class Slave_T {
     }
 
     // TODO: implement
-    public void process(Msg msg) {
+    public void process(Msg msg, Socket sock) {
 	String act = msg.get_action();
 	String cmd = msg.get_cmd();
 	String to_ip = msg.get_toip();
@@ -42,6 +42,8 @@ public class Slave_T {
 	// cases
 
 	// write response to server
+	this.set_status(Constants.Status.BUSY);
+	this.writeToServer(sock);
 	return;
     }
 
@@ -58,7 +60,7 @@ public class Slave_T {
 	    Msg msg = (Msg) ois.readObject();
 	    String intended_slave_id = msg.get_sid();
 	    if (intended_slave_id.equals(slave_id)) {
-		this.process(msg);
+		this.process(msg, sock);
 	    }
 	}
     }
