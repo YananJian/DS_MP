@@ -1,12 +1,13 @@
 import java.io.IOException;
 import java.net.*;
+import common.Constants;
 
 public class Slave_T {
 
-    String slave_id;
-    String manager_IP = "";
-    int manager_port = 0;
-    
+    private String slave_id;
+    private String manager_IP = "";
+    private int manager_port = 0;
+    private Constants.status status;
 	
     public boolean argValidate(String [] args){
 	if (args.length == 2){
@@ -16,6 +17,14 @@ public class Slave_T {
 	    return true;
 	}
 	return false;
+    }
+
+    public void set_status(Constants.status stat) {
+	self.status = stat;
+    }
+
+    public Constants.status get_status() {
+	return self.status;
     }
 
     // TODO: implement
@@ -30,7 +39,7 @@ public class Slave_T {
 
     public void writeToServer(Socket sock) {
 	Msg msg = new Msg("", "");
-	msg.set_status(IDLE); 
+	msg.set_status(slave.get_status()); 
 	ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
 	oos.writeObject(msg);
     }
@@ -48,6 +57,7 @@ public class Slave_T {
 	
     public void connect(){
 	try {
+	    slave.set_status(IDLE);
 	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
 	    slave.writeToServer(sock);
 	    slave.readFromServer(sock);	               
