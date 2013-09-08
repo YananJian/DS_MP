@@ -19,22 +19,31 @@ public class Slave_T {
     }
 
     // TODO: implement
-    public void process(Message msg) {
+    public void process(Msg msg) {
 	return;
+    }
+
+    // TODO: implement
+    public void writeToServer(Socket sock) {
+	reutrn;
+    }
+
+    public void readFromServer(Socket sock) {
+	ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
+	while (true) { 
+	    Msg msg = (Msg) ois.readObject();
+	    int intended_slave_id = msg.slave_id;
+	    if (intended_slave_id == slave_id) {
+		slave.process(msg);
+	    }
+	}
     }
 	
     public void connect(){
 	try {
-	    Socket sock = new Socket(this.manager_IP, this.manager_port);
-	    ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());
-	    while (true) { 
-		Message msg = (Message) ois.readObject();
-                int intended_slave_id = msg.slave_id;
-                if (intended_slave_id == slave_id) {
-		    slave.process(msg);
-		}
-	    }
-	    
+	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
+	    slave.writeToServer(sock);
+	    slave.readFromServer(sock);	               
 	} catch (UnknownHostException e) {
 	    // TODO Auto-generated catch block
 	    e.printStackTrace();
