@@ -34,7 +34,8 @@ public class Slave_T {
     }
 
     // TODO: implement
-    public void process(Msg msg, Socket sock) throws IOException {
+
+    public void process(ObjectOutputStream oos, Msg msg) throws IOException {
 	String act = msg.get_action();
 	String cmd = msg.get_cmd();
 	String to_ip = msg.get_toip();
@@ -44,23 +45,22 @@ public class Slave_T {
 	// write response to server
 	this.set_status(Constants.Status.BUSY);
 	Msg reply = new Msg("", "");
-	msg.set_status(this.get_status()); 
-	this.writeToServer(sock, reply);
+
+	reply.set_status(this.get_status()); 
+	this.writeToServer(oos, reply);
 	return;
     }
 
-    public void writeToServer(Socket sock, Msg msg) throws IOException {
-	ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
-	oos.writeObject(msg);
+    public void writeToServer(ObjectOutputStream oos, Msg reply) throws IOException {
+	oos.writeObject(reply);
     }
 
-    public void readFromServer(Socket sock) throws IOException, ClassNotFoundException {
-	ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
+    public void readFromServer(ObjectInputStream ois, ObjectOutputStream oos) throws IOException, ClassNotFoundException {
 	while (true) { 
 	    Msg msg = (Msg) ois.readObject();
 	    String intended_slave_id = msg.get_sid();
 	    if (intended_slave_id.equals(slave_id)) {
-		this.process(msg, sock);
+		this.process(oos, msg);
 	    }
 	}
     }
@@ -69,11 +69,12 @@ public class Slave_T {
 	try {
 	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
 
-	    Msg msg = new Msg("", "");
-	    msg.set_status(this.get_status()); 
-	    this.writeToServer(sock, msg);
-	    this.readFromServer(sock);	               
-
+	    ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
+	    ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
+	    Msg reply = new Msg("", "");
+	    reply.set_status(this.get_status()); 
+	    this.writeToServer(oos, reply);
+	    this.readFromServer(ois, oos);	               
 	} catch (UnknownHostException e) {
 	    // TODO Auto-generated catch block
 	    e.printStackTrace();
