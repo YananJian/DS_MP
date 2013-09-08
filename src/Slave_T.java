@@ -39,6 +39,9 @@ public class Slave_T {
 	String cmd = msg.get_cmd();
 	String to_ip = msg.get_toip();
 	int to_port = msg.get_toport();
+	// cases
+
+	// write response to server
 	return;
     }
 
@@ -64,7 +67,7 @@ public class Slave_T {
 	try {
 	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
 	    this.writeToServer(sock);
-	    //slave.readFromServer(sock);	               
+	    slave.readFromServer(sock);	               
 	} catch (UnknownHostException e) {
 	    // TODO Auto-generated catch block
 	    e.printStackTrace();
