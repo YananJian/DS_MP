@@ -34,7 +34,7 @@ public class Slave_T {
     }
 
     // TODO: implement
-    public void process(Msg msg, Socket sock) {
+    public void process(ObjectOutputStream oos, Msg msg) {
 	String act = msg.get_action();
 	String cmd = msg.get_cmd();
 	String to_ip = msg.get_toip();
@@ -45,22 +45,20 @@ public class Slave_T {
 	this.set_status(Constants.Status.BUSY);
 	Msg reply = new Msg("", "");
 	reply.set_status(this.get_status()); 
-	this.writeToServer(sock, reply);
+	this.writeToServer(oos, reply);
 	return;
     }
 
-    public void writeToServer(Socket sock, Msg msg) throws IOException {
-	ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
-	oos.writeObject(msg);
+    public void writeToServer(ObjectOutputStream oos, Msg reply) throws IOException {
+	oos.writeObject(reply);
     }
 
-    public void readFromServer(Socket sock) throws IOException, ClassNotFoundException {
-	ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
+    public void readFromServer(ObjectInputStream ois, ObjectOutputStream oos) throws IOException, ClassNotFoundException {
 	while (true) { 
 	    Msg msg = (Msg) ois.readObject();
 	    String intended_slave_id = msg.get_sid();
 	    if (intended_slave_id.equals(slave_id)) {
-		this.process(msg, sock);
+		this.process(oos, msg);
 	    }
 	}
     }
@@ -68,10 +66,12 @@ public class Slave_T {
     public void connect() throws InterruptedException{
 	try {
 	    Socket sock = new Socket(this.manager_IP, this.manager_port);	    
-	    Msg msg = new Msg("", "");
-	    msg.set_status(this.get_status()); 
-	    this.writeToServer(sock, msg);
-	    slave.readFromServer(sock);	               
+	    ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
+	    ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
+	    Msg reply = new Msg("", "");
+	    reply.set_status(this.get_status()); 
+	    this.writeToServer(oos, reply);
+	    this.readFromServer(ois, oos);	               
 	} catch (UnknownHostException e) {
 	    // TODO Auto-generated catch block
 	    e.printStackTrace();
