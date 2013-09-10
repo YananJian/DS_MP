@@ -2,11 +2,11 @@ package common;
 
 public class Msg implements java.io.Serializable{
 
-	private String act;
-	private String cmd;
-	private String slave_id;
-	private String to_ip;
-	private int to_port;
+	private String act = "";
+	private String cmd = "";
+	private String slave_id = "";
+	private String to_ip = "";
+	private int to_port = 0;
 	private Constants.Status status;
 	
 	public Msg(String act, String cmd)

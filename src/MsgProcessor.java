@@ -33,12 +33,12 @@ public class MsgProcessor implements Runnable{
 			if (!msg.get_sid().equals(null)){
 				Socket socket = this.slave_sockets.get(msg.get_sid());
 				ObjectOutputStream outputstm = this.slave_outputstm.get(msg.get_sid());
-				if (socket.equals(null))
+				if (socket == null)
 				{
-					socket = new Socket(msg.get_toip(), msg.get_toport());
-					this.slave_sockets.put(msg.get_sid(), socket);
+					System.out.println("Slave not exists");
+					return;
 				}
-				if (outputstm.equals(null))
+				if (outputstm == null)
 				{
 					outputstm = new ObjectOutputStream(socket.getOutputStream());
 					this.slave_outputstm.put(msg.get_sid(), outputstm);
@@ -89,21 +89,26 @@ public class MsgProcessor implements Runnable{
 				String cli_ip = cli_sock.getInetAddress().getHostAddress();
 				int cli_port = cli_sock.getPort();
 				
-				System.out.format("cli ip:%s\t cli port:%d\n", cli_ip, cli_port);
+				System.out.format("Connected cli ip:%s\t cli port:%d\n", cli_ip, cli_port);
 				String sid = pm.gen_slaveid(cli_ip, cli_port);
+				this.slave_sockets.put(sid, cli_sock);
 				ObjectInputStream inputstm = this.slave_inputstm.get(sid);
-				
+				ObjectOutputStream outputstm = this.slave_outputstm.get(sid);
 				if (inputstm == null)
 				{
 					inputstm = new ObjectInputStream(cli_sock.getInputStream());
 					this.slave_inputstm.put(sid, inputstm);
 				}
+				if (outputstm == null)
+				{
+					outputstm = new ObjectOutputStream(cli_sock.getOutputStream());
+					this.slave_outputstm.put(sid, outputstm);			
+				}
 				String ip_port = pm.get_sidmap(sid);
 				if (ip_port == null)
 					pm.add_sidmap(sid, cli_ip+":"+String.valueOf(cli_port));
 			
-				Object o = inputstm.readObject();
-				
+				Object o = inputstm.readObject();				
 				if (!(o instanceof Msg))
 				{
 					System.out.println("Slave is not sending a Msg");
@@ -113,8 +118,8 @@ public class MsgProcessor implements Runnable{
 				if (m.get_status() == Constants.Status.IDLE)
 				{
 					System.out.println("Slave IDLE, sid:"+sid);
-					pm.ideal_sids.add(sid);
-					pm.set_sid_status(sid, Constants.Status.IDLE);
+					pm.sids.add(sid);
+					//pm.set_sid_status(sid, Constants.Status.IDLE);
 				}
 				else{ System.out.println("Slave "+m.get_status()+" sid:%s"+sid);}
 				

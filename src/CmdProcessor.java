@@ -14,11 +14,15 @@ public class CmdProcessor implements Runnable{
 	
 	@Override
 	public void run() {
+		System.out.println("Input cmd here, format: action cmd");
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		
 		// TODO Auto-generated method stub
 		while(true){
 			try {
+				System.out.println("Input cmd here, format: action cmd");
 				String cmd = br.readLine();
+				System.out.println("After reading line");
 				// input cmd format: act cmd
 				String []cmds = cmd.split(" ");
 				if (cmds.length != 2)
@@ -28,7 +32,8 @@ public class CmdProcessor implements Runnable{
 				}
 				Msg msg = new Msg(cmds[0], cmds[1]);
 				ProcessManager pm = ProcessManager.getInstance();
-				pm.msgQueue.add(msg);
+				pm.dispatchMsg(msg);
+				//pm.msgQueue.add(msg);
 				
 				
 			} catch (IOException e) {

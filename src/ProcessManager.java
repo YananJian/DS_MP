@@ -20,15 +20,15 @@ import java.util.concurrent.*;
 import common.Constants;
 import common.Msg;
 
-public class ProcessManager implements Runnable{
+public class ProcessManager{
 	
 	private HashMap<String, String> sid_ipport = new HashMap<String, String>();
-	private HashMap<String, Constants.Status> sid_status = new HashMap<String, Constants.Status>();
+	//private HashMap<String, Constants.Status> sid_status = new HashMap<String, Constants.Status>();
 	
 	private static ProcessManager pm = new ProcessManager();
 	
 	public ConcurrentLinkedQueue<Msg> msgQueue = new ConcurrentLinkedQueue<Msg>();
-	public ConcurrentLinkedQueue<String> ideal_sids = new ConcurrentLinkedQueue<String>();
+	public ConcurrentLinkedQueue<String> sids = new ConcurrentLinkedQueue<String>();
 	MsgProcessor mp = MsgProcessor.getInstance();
 	CmdProcessor cp = CmdProcessor.getInstance();
 	
@@ -37,12 +37,12 @@ public class ProcessManager implements Runnable{
 	{
 		return pm;
 	}
-	
+	/*
 	public void set_sid_status(String sid, Constants.Status status)
 	{
 		this.sid_status.put(sid, status);
 		
-	}
+	}*/
 	
 	public boolean argValidate(String [] args){
 		return true;
@@ -74,10 +74,20 @@ public class ProcessManager implements Runnable{
 		
 	}
 	
-	private void dispatchMsg(Msg msg)
+	public void dispatchMsg(Msg msg)
 	{
-		String sid = this.ideal_sids.poll();
+		String sid = this.sids.peek();
 		String ip_port = this.sid_ipport.get(sid);
+		if (sid == null)
+		{
+			System.out.println("No ideal slaves");
+			return;
+		}
+		if (ip_port == null)
+		{
+			System.out.println("No slaves");
+			return;
+		}
 		msg.set_slaveid(sid);
 		msg.set_to_ip(ip_port.split(":")[0]);
 		msg.set_to_port(Integer.parseInt(ip_port.split(":")[1]));
@@ -94,11 +104,13 @@ public class ProcessManager implements Runnable{
 		}
 		Thread mt = new Thread(_pm.mp);
 		Thread ct = new Thread(_pm.cp);
+		
 		mt.start();
 		ct.start();
 		
 	}
 
+	/*
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
@@ -110,7 +122,7 @@ public class ProcessManager implements Runnable{
 			this.dispatchMsg(msg);
 		}
 	}
-
+	 */
 	
 }
 
