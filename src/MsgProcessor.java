@@ -1,3 +1,5 @@
+import common.Constants.RESULT;
+import common.MigratableProcess;
 import common.Msg;
 import common.Constants;
 
@@ -28,7 +30,7 @@ public class MsgProcessor implements Runnable{
 		return mp;
 	}
 	
-	public void send2slave(Msg msg){
+	public RESULT send2slave(Msg msg){
 		try {
 			if (!msg.get_sid().equals(null)){
 				Socket socket = this.slave_sockets.get(msg.get_sid());
@@ -36,7 +38,7 @@ public class MsgProcessor implements Runnable{
 				if (socket == null)
 				{
 					System.out.println("Slave not exists");
-					return;
+					return RESULT.SID_NOT_MACHING_SLAVE;
 				}
 				if (outputstm == null)
 				{
@@ -46,20 +48,49 @@ public class MsgProcessor implements Runnable{
 				outputstm.writeObject(msg);
 				System.out.println("Slave received msg");
 				outputstm.flush();
+				return RESULT.SUCCESS;
 			}
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+			this.slave_sockets.remove(msg.get_sid());
+			this.slave_inputstm.remove(msg.get_sid());
+			this.slave_outputstm.remove(msg.get_sid());
+			return RESULT.SLAVE_UNREACHABLE;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
+			return RESULT.IO_ERROR;
+		} 
+		return RESULT.SID_NO_EXISTS;
 	}
 	
 	public void read_slave(String sid, Socket sock)
 	{
 		//this.input
 		
+	}
+	
+	public void parseMsg(Msg m)
+	{
+		ProcessManager pm = ProcessManager.getInstance();
+		String sid = m.get_sid();
+		//String pid = m.get_pid();
+		if (m.get_status() == Constants.Status.IDLE)
+		{
+			if (pm == null)
+				System.out.println("PM NULL");
+			if (pm.sids == null)
+				System.out.println("PM SID NULL");
+			pm.sids.add(sid);
+			
+			//pm.set_sid_status(sid, Constants.Status.IDLE);
+		}
+		if ((m.get_migprocess() != null) && (m.get_status() == Constants.Status.SUSPENDED))
+		{		
+			pm.suspended_procs.put(m.get_cmd(), m.get_migprocess()); // Should use pid as key
+		}
+		else{ System.out.println("Slave "+m.get_status()+" sid:%s"+sid);}
 	}
 	
 	@Override
@@ -115,14 +146,9 @@ public class MsgProcessor implements Runnable{
 					continue;
 				}
 				Msg m = (Msg) o;
-				if (m.get_status() == Constants.Status.IDLE)
-				{
-					System.out.println("Slave IDLE, sid:"+sid);
-					pm.sids.add(sid);
-					//pm.set_sid_status(sid, Constants.Status.IDLE);
-				}
-				else{ System.out.println("Slave "+m.get_status()+" sid:%s"+sid);}
-				
+				m.set_slaveid(sid);
+				this.parseMsg(m);
+								
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();

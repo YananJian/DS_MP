@@ -1,24 +1,44 @@
 package common;
 
-import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 
 public class TransactionalFileOutputStream extends OutputStream implements Serializable{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	String fname;
-	int fd;
+	
 	public TransactionalFileOutputStream(String _fileName) {
 		this.fname = _fileName;
-		this.fd = 0;
 	}
+	
 	@Override
-	public void write(int c) throws IOException{
+	public void write(int b) throws IOException{
 		
-		
+		@SuppressWarnings("resource")
+		FileOutputStream fos = new FileOutputStream(this.fname, true);
+		fos.write(b);
+	}
+	
+	@Override
+	public void write(byte b[]) throws IOException
+	{
+		@SuppressWarnings("resource")
+		FileOutputStream fos = new FileOutputStream(this.fname, true);
+		fos.write(b);	
 	}
 
+	@Override
+	public void write(byte[] b, int off, int len) throws IOException
+	{
+		@SuppressWarnings("resource")
+		FileOutputStream fos = new FileOutputStream(this.fname, true);
+		fos.write(b, off, len);	
+	}
 	
 }
