@@ -22,15 +22,16 @@ public class CmdProcessor implements Runnable{
 			try {
 				System.out.println("Input cmd here, format: action cmd");
 				String cmd = br.readLine();
-				System.out.println("After reading line");
 				// input cmd format: act cmd
 				String []cmds = cmd.split(" ");
-				if (cmds.length != 2)
+				if (cmds.length < 2)
 				{
 					System.out.println("Illegal Cmd. Format: action cmd");
 					continue;
 				}
-				Msg msg = new Msg(cmds[0], cmds[1]);
+						
+				String tmp = cmd.substring(cmd.indexOf(" ")).trim();
+				Msg msg = new Msg(cmds[0], tmp,"");
 				ProcessManager pm = ProcessManager.getInstance();
 				pm.dispatchMsg(msg);
 				//pm.msgQueue.add(msg);

@@ -18,6 +18,8 @@ import java.io.OutputStream;
 import java.util.concurrent.*;
 
 import common.Constants;
+import common.MigratableProcess;
+import common.Constants.RESULT;
 import common.Msg;
 
 public class ProcessManager{
@@ -29,6 +31,7 @@ public class ProcessManager{
 	
 	public ConcurrentLinkedQueue<Msg> msgQueue = new ConcurrentLinkedQueue<Msg>();
 	public ConcurrentLinkedQueue<String> sids = new ConcurrentLinkedQueue<String>();
+	public HashMap<String, MigratableProcess> suspended_procs = new HashMap<String, MigratableProcess>();
 	MsgProcessor mp = MsgProcessor.getInstance();
 	CmdProcessor cp = CmdProcessor.getInstance();
 	
@@ -71,7 +74,14 @@ public class ProcessManager{
 			e.printStackTrace();
 		} 
 		finally {return md5;}
-		
+	}
+	
+	// generate process id, make pid the identifier of processes, 
+	//in case two processes with the same Class running at the same time
+	public String gen_pid()
+	{
+		String pid = String.valueOf(System.currentTimeMillis());
+		return pid;	
 	}
 	
 	public void dispatchMsg(Msg msg)
@@ -88,11 +98,23 @@ public class ProcessManager{
 			System.out.println("No slaves");
 			return;
 		}
+		if (msg.get_action() == "R")
+		{
+			MigratableProcess p = this.suspended_procs.get(msg.get_cmd());
+			if ( p!= null)
+				msg.set_migprocess(p);
+		}
 		msg.set_slaveid(sid);
+		msg.set_pid(gen_pid());
 		msg.set_to_ip(ip_port.split(":")[0]);
 		msg.set_to_port(Integer.parseInt(ip_port.split(":")[1]));
-		System.out.format("Dispatching Msg, ip:%s, port:%d", msg.get_toip(), msg.get_toport());
-		mp.send2slave(msg);
+		System.out.format("Dispatching, to ip:%s, port:%d", msg.get_toip(), msg.get_toport());
+		RESULT res = mp.send2slave(msg);
+		if ((res == RESULT.SLAVE_UNREACHABLE) || (res == RESULT.IO_ERROR))
+		{
+			sids.remove(sid);
+			sid_ipport.remove(sid);
+		}
 	}
 	
 	public static void main(String[] args) {

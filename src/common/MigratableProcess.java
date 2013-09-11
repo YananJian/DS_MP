@@ -7,5 +7,7 @@ public interface MigratableProcess extends java.lang.Runnable, java.io.Serializa
     void suspend();
     
     void terminate();
+    
+    void print();
 
 }

@@ -1,5 +1,5 @@
-package common;
 
+import java.io.BufferedInputStream;
 import java.io.PrintStream;
 import java.io.EOFException;
 import java.io.DataInputStream;
@@ -9,9 +9,14 @@ import java.io.IOException;
 import java.lang.Thread;
 import java.lang.InterruptedException;
 import java.sql.Time;
+import common.*;
 
 public class GrepProcess implements MigratableProcess
 {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	private TransactionalFileInputStream  inFile;
 	private TransactionalFileOutputStream outFile;
 	private String query;
@@ -34,8 +39,8 @@ public class GrepProcess implements MigratableProcess
 	public void run()
 	{
 		PrintStream out = new PrintStream(outFile);
-		DataInputStream in = new DataInputStream(inFile);
-
+		BufferedReader in = new BufferedReader(new InputStreamReader(inFile));
+			
 		try {
 			while (!suspending) {
 				String line = in.readLine();
@@ -79,5 +84,13 @@ public class GrepProcess implements MigratableProcess
 		suspending = false;
 		
 	}
+
+	@Override
+	public void print() {
+		// TODO Auto-generated method stub
+		System.out.println("This is Grep Process!");
+	}
+	
+	
 
 }
