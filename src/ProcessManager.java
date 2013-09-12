@@ -86,7 +86,7 @@ public class ProcessManager{
 		String ip_port = this.sid_ipport.get(sid);		
 		if (sid == null)
 		{
-			System.out.println("No ideal slaves");
+			System.out.println("No available slaves");
 			return;
 		}
 		if (ip_port == null)

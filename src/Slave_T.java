@@ -177,10 +177,11 @@ public class Slave_T {
     {
     	System.out.println("Report status");
     }
+
     
     public void process(Msg msg) throws IOException {
 	String act = msg.get_action();
-	String cmd = msg.get_cmd(); // S:Suspend, L: launch, T:teminate, R:resume
+	String cmd = msg.get_cmd(); // S:Suspend, L:launch, T:teminate, R:resume
 	String to_ip = msg.get_toip();
 	int to_port = msg.get_toport();
 	String pid = msg.get_pid();
