@@ -71,12 +71,6 @@ public class GrepProcess implements MigratableProcess
 	public void suspend()
 	{
 		suspending = true;
-		while (suspending){ try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}}
 	}
 	
 	public void terminate()

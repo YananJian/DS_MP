@@ -18,8 +18,11 @@ Slave_T: Slave_T.class # TODO: Slave_T -> Slave
 
 GrepProcess: GrepProcess.class
 
+CpFile: CpFile.class
 
-pm: ProcessManager CmdProcessor MsgProcessor Slave_T GrepProcess
+CountLines: CountLines.class
+
+pm: ProcessManager CmdProcessor MsgProcessor Slave_T GrepProcess CpFile CountLines
 	java ProcessManager
 
 clean:

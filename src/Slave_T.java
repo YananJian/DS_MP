@@ -16,6 +16,8 @@ public class Slave_T {
     private int manager_port = common.Constants.PORT_MASTER;
     private HashMap<String, MigratableProcess> runningpro = new HashMap<String, MigratableProcess>();
     private HashMap<String, MigratableProcess> suspendedpro = new HashMap<String, MigratableProcess>();
+    private HashMap<String, Thread> runningthreads = new HashMap<String, Thread>();
+    private HashMap<String, Thread> suspendedthreads = new HashMap<String, Thread>();
     private ObjectOutputStream oos;
     private ObjectInputStream ois;
     private Constants.Status status;
@@ -58,9 +60,10 @@ public class Slave_T {
 				Object params = tmp.split(" ");
 				p = constructor.newInstance(params);
 			}
-			this.runningpro.put(pid, p);
+			this.runningpro.put(pid, p);			
 			Thread t = new Thread(p);
 			t.start();		
+			this.runningthreads.put(pid, t);
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -101,21 +104,23 @@ public class Slave_T {
 		}
     }
     
-    public void suspend(String cmd, String pid)
+    @SuppressWarnings("deprecation")
+	public void suspend(String cmd, String pid)
     {
     	System.out.println("Suspended cmd:"+pid);
     	MigratableProcess p = this.runningpro.remove(pid);
-    	
+    	Thread t = this.runningthreads.remove(pid);
     	
     	if (p == null)
     	{
     		System.out.println("Process "+pid+" is not running!");
     		return;
     	}
-    	
     	this.suspendedpro.put(pid, p);
+    	p.suspend();
+    	t.suspend();
     	this.record(p, pid);
-    	//p.suspend();
+    	this.suspendedthreads.put(pid, t);
     	Msg m = new Msg("",cmd, pid); 
     	m.set_slaveid(this.slave_id);
     	m.set_status(Constants.Status.SUSPENDED);
@@ -187,6 +192,7 @@ public class Slave_T {
 	String pid = msg.get_pid();
 	//MigratableProcess p = msg.get_migprocess();
 	// cases
+	System.out.println("Slave Got A Msg!");
 	if (act.equals("L"))
 		launch(cmd, pid);
 	else if (act.equals("S"))
