@@ -1,22 +1,8 @@
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
-import java.nio.channels.*;
-import java.math.*;
-import java.security.*;
-import java.io.BufferedReader;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-//import java.io.FileInputStream;
 import java.io.IOException;
-//import java.io.InputStream;
-//import java.io.Serializable;
-import java.io.InputStreamReader;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.net.*;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.concurrent.*;
-
 import common.Constants;
 import common.MigratableProcess;
 import common.Constants.RESULT;
@@ -24,14 +10,17 @@ import common.Msg;
 
 public class ProcessManager{
 	
-	private HashMap<String, String> sid_ipport = new HashMap<String, String>();
+	HashMap<String, String> sid_ipport = new HashMap<String, String>();
+	HashMap<String, String> ipport_sid = new HashMap<String, String>();
 	//private HashMap<String, Constants.Status> sid_status = new HashMap<String, Constants.Status>();
-	
+	HashMap<String, String> pid_cmd = new HashMap<String, String>();
 	private static ProcessManager pm = new ProcessManager();
 	
 	public ConcurrentLinkedQueue<Msg> msgQueue = new ConcurrentLinkedQueue<Msg>();
 	public ConcurrentLinkedQueue<String> sids = new ConcurrentLinkedQueue<String>();
-	public HashMap<String, MigratableProcess> suspended_procs = new HashMap<String, MigratableProcess>();
+	public HashMap<String, String>running_procs = new HashMap<String, String>();
+	public HashMap<String, String> suspended_procs = new HashMap<String, String>();
+	public HashMap<String, String> resumed_procs = new HashMap<String, String>();
 	MsgProcessor mp = MsgProcessor.getInstance();
 	CmdProcessor cp = CmdProcessor.getInstance();
 	
@@ -62,12 +51,17 @@ public class ProcessManager{
 	}
 	
 	public String gen_slaveid(String ip, int port){
+		String cli_info = ip + String.valueOf(port);
+		return md5(cli_info);
+	}
+	
+	public String md5(String str)
+	{
 		MessageDigest mdEnc;
 		String md5 = null;
 		try {
-			mdEnc = MessageDigest.getInstance("MD5");
-			String cli_info = ip + String.valueOf(port);
-			mdEnc.update(cli_info.getBytes(), 0, cli_info.length());
+			mdEnc = MessageDigest.getInstance("MD5");			
+			mdEnc.update(str.getBytes(), 0, str.length());
 			md5 = mdEnc.digest().toString();
 		} catch (NoSuchAlgorithmException e) {
 			// TODO Auto-generated catch block
@@ -78,16 +72,18 @@ public class ProcessManager{
 	
 	// generate process id, make pid the identifier of processes, 
 	//in case two processes with the same Class running at the same time
-	public String gen_pid()
+	public String gen_pid(String cmd)
 	{
-		String pid = String.valueOf(System.currentTimeMillis());
+		//String pid = String.valueOf(System.currentTimeMillis());
+		String pid = md5(cmd);
 		return pid;	
 	}
 	
 	public void dispatchMsg(Msg msg)
 	{
 		String sid = this.sids.peek();
-		String ip_port = this.sid_ipport.get(sid);
+		
+		String ip_port = this.sid_ipport.get(sid);		
 		if (sid == null)
 		{
 			System.out.println("No ideal slaves");
@@ -98,17 +94,99 @@ public class ProcessManager{
 			System.out.println("No slaves");
 			return;
 		}
-		if (msg.get_action() == "R")
+		String ip = ip_port.split(":")[0];
+		int port = Integer.parseInt(ip_port.split(":")[1]);
+		
+		if (msg.get_action().equals("L"))
 		{
-			MigratableProcess p = this.suspended_procs.get(msg.get_cmd());
-			if ( p!= null)
-				msg.set_migprocess(p);
+			String pid = gen_pid(msg.get_cmd());
+			msg.set_pid(pid);
+			System.out.println("Cmd+"+msg.get_cmd()+" pid:"+pid);
+			pid_cmd.put(pid, msg.get_cmd());
+			ipport_sid.put(ip_port, sid);
+			System.out.println("*************");
+			System.out.println("Running Process:"+pid);
+			running_procs.put(pid, sid);
+			System.out.println("*************");
 		}
-		msg.set_slaveid(sid);
-		msg.set_pid(gen_pid());
-		msg.set_to_ip(ip_port.split(":")[0]);
-		msg.set_to_port(Integer.parseInt(ip_port.split(":")[1]));
-		System.out.format("Dispatching, to ip:%s, port:%d", msg.get_toip(), msg.get_toport());
+		else if (msg.get_action().equals("S"))
+		{
+			if (running_procs.containsKey(msg.get_cmd()))
+			{	sid = running_procs.remove(msg.get_cmd());
+				System.out.println("Suspend:"+msg.get_cmd());
+				msg.set_pid(msg.get_cmd());
+				suspended_procs.put(msg.get_cmd(), sid);
+			}
+			else
+			{
+				System.out.println("pid "+msg.get_cmd()+" has not been launched");
+				return;
+			}
+		}
+		else if (msg.get_action().equals("T"))
+		{
+			msg.set_pid(msg.get_cmd());
+			if (this.running_procs.containsKey(msg.get_cmd()))
+				sid = running_procs.remove(msg.get_cmd());
+			else if (this.suspended_procs.containsKey(msg.get_cmd()))
+				sid = suspended_procs.remove(msg.get_cmd());
+			else if (this.resumed_procs.containsKey(msg.get_cmd()))
+				sid = resumed_procs.remove(msg.get_cmd());
+			
+		}
+		else if (msg.get_action().equals("R"))
+		{
+				
+			String cmd = msg.get_cmd();
+			String []_tmp = cmd.split(" ");
+			String _sid = this.suspended_procs.remove(msg.get_cmd());
+			String s_ip_port = this.sid_ipport.get(_sid);
+			
+			if (_tmp.length > 1)
+			{
+				cmd = _tmp[0];
+				msg.set_cmd(cmd);
+				System.out.println(suspended_procs.values());
+				if (this.suspended_procs.remove(cmd)==null)
+				{
+					System.out.println("pid:"+cmd+" has not been suspended");
+					return;
+				}
+				s_ip_port = _tmp[1];
+				sid = ipport_sid.get(s_ip_port);		
+			}
+			else{ sid = _sid;}
+			
+			if (s_ip_port==null)
+			{
+				System.out.println("pid:"+cmd+" has not been suspended");
+				return;
+			}
+			String []tmp = s_ip_port.split(":");
+			
+			if (tmp.length>0 && tmp.length< 2)
+			{
+				System.out.println("Please input the valid ip:port");
+				return;
+			}
+			else
+			{
+				ip = tmp[0];
+				port = Integer.valueOf(tmp[1]);					
+			}
+			msg.set_pid(msg.get_cmd());
+		
+			System.out.println("****************");
+			System.out.println("Resume:"+msg.get_cmd());
+			this.resumed_procs.put(msg.get_pid(), sid);
+			System.out.println("****************");
+		}
+		msg.set_slaveid(sid);	
+		System.out.println("SID:"+sid);
+		msg.set_to_ip(ip);
+		msg.set_to_port(port);
+		
+		System.out.format("Dispatching, to ip:%s, port:%d\n", msg.get_toip(), msg.get_toport());
 		RESULT res = mp.send2slave(msg);
 		if ((res == RESULT.SLAVE_UNREACHABLE) || (res == RESULT.IO_ERROR))
 		{
@@ -131,20 +209,6 @@ public class ProcessManager{
 		ct.start();
 		
 	}
-
-	/*
-	@Override
-	public void run() {
-		// TODO Auto-generated method stub
-		while (true)
-		{
-			Msg msg = this.msgQueue.poll();
-			System.out.format("cmds:%s, action: %s", 
-				           		msg.get_cmd(), msg.get_action());
-			this.dispatchMsg(msg);
-		}
-	}
-	 */
 	
 }
 

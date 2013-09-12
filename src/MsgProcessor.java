@@ -42,13 +42,17 @@ public class MsgProcessor implements Runnable{
 				}
 				if (outputstm == null)
 				{
+					System.out.println("Output Stream null");
 					outputstm = new ObjectOutputStream(socket.getOutputStream());
 					this.slave_outputstm.put(msg.get_sid(), outputstm);
 				}
 				outputstm.writeObject(msg);
-				System.out.println("Slave received msg");
 				outputstm.flush();
 				return RESULT.SUCCESS;
+			}
+			else
+			{
+				System.out.println("SID null");
 			}
 		} catch (UnknownHostException e) {
 			// TODO Auto-generated catch block
@@ -75,22 +79,19 @@ public class MsgProcessor implements Runnable{
 	{
 		ProcessManager pm = ProcessManager.getInstance();
 		String sid = m.get_sid();
-		//String pid = m.get_pid();
+		String pid = m.get_pid();
 		if (m.get_status() == Constants.Status.IDLE)
 		{
-			if (pm == null)
-				System.out.println("PM NULL");
-			if (pm.sids == null)
-				System.out.println("PM SID NULL");
-			pm.sids.add(sid);
-			
+			pm.sids.add(sid);			
 			//pm.set_sid_status(sid, Constants.Status.IDLE);
 		}
-		if ((m.get_migprocess() != null) && (m.get_status() == Constants.Status.SUSPENDED))
-		{		
-			pm.suspended_procs.put(m.get_cmd(), m.get_migprocess()); // Should use pid as key
+		else if (m.get_status() == Constants.Status.SUSPENDED)
+		{
+			System.out.println("In MsgProcessor, pid:"+m.get_pid());
+			pm.suspended_procs.put(m.get_pid(), pm.sid_ipport.get(m.get_sid()));
 		}
-		else{ System.out.println("Slave "+m.get_status()+" sid:%s"+sid);}
+		
+		else{ System.out.println("Slave "+m.get_status()+" sid:"+sid);}
 	}
 	
 	@Override
@@ -117,12 +118,15 @@ public class MsgProcessor implements Runnable{
 			try {
 				System.out.println("Preparing to accept");
 				cli_sock = server_sock.accept();
+				System.out.println("New Accepted Conn");
 				String cli_ip = cli_sock.getInetAddress().getHostAddress();
 				int cli_port = cli_sock.getPort();
 				
 				System.out.format("Connected cli ip:%s\t cli port:%d\n", cli_ip, cli_port);
 				String sid = pm.gen_slaveid(cli_ip, cli_port);
 				this.slave_sockets.put(sid, cli_sock);
+				pm.ipport_sid.put(cli_ip+":"+String.valueOf(cli_port), sid);
+				pm.sid_ipport.put(sid, cli_ip+":"+String.valueOf(cli_port));
 				ObjectInputStream inputstm = this.slave_inputstm.get(sid);
 				ObjectOutputStream outputstm = this.slave_outputstm.get(sid);
 				if (inputstm == null)
@@ -146,7 +150,10 @@ public class MsgProcessor implements Runnable{
 					continue;
 				}
 				Msg m = (Msg) o;
-				m.set_slaveid(sid);
+				if (m.get_sid().equals(""))
+					m.set_slaveid(sid);
+				System.out.println("PID:"+m.get_pid());
+				System.out.println("parsing Msg");
 				this.parseMsg(m);
 								
 			} catch (IOException e) {

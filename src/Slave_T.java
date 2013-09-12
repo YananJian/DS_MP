@@ -41,7 +41,7 @@ public class Slave_T {
 
     // TODO: implement
     
-    public void launch(String cmd)
+    public void launch(String cmd, String pid)
     {
     	System.out.println("Launched cmd:"+cmd);
     	String class_name = cmd.split(" ")[0];
@@ -57,10 +57,10 @@ public class Slave_T {
 			{			
 				Object params = tmp.split(" ");
 				p = constructor.newInstance(params);
-				this.runningpro.put(class_name, p);
-				Thread t = new Thread(p);
-				t.start();
 			}
+			this.runningpro.put(pid, p);
+			Thread t = new Thread(p);
+			t.start();		
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -85,10 +85,10 @@ public class Slave_T {
 		}
     }
     
-    public void record(MigratableProcess p, String cmd)
+    public void record(MigratableProcess p, String pid)
     {
     	TransactionalFileOutputStream fs = new TransactionalFileOutputStream(
-    			         						"process_"+cmd+"_tmp");
+    			         						"process_"+pid+"_tmp");
     	ObjectOutputStream objectStream;
 
 		try {
@@ -101,21 +101,25 @@ public class Slave_T {
 		}
     }
     
-    public void suspend(String cmd)
+    public void suspend(String cmd, String pid)
     {
-    	System.out.println("Suspended cmd:"+cmd);
-    	MigratableProcess p = this.runningpro.remove(cmd);
+    	System.out.println("Suspended cmd:"+pid);
+    	MigratableProcess p = this.runningpro.remove(pid);
+    	
     	
     	if (p == null)
     	{
-    		System.out.println("Process "+cmd+" is not running!");
+    		System.out.println("Process "+pid+" is not running!");
     		return;
     	}
-    	this.suspendedpro.put(cmd, p);
-    	this.record(p, cmd);
-    	Msg m = new Msg("",cmd,""); // Should use pid as the last argument
+    	
+    	this.suspendedpro.put(pid, p);
+    	this.record(p, pid);
+    	//p.suspend();
+    	Msg m = new Msg("",cmd, pid); 
+    	m.set_slaveid(this.slave_id);
     	m.set_status(Constants.Status.SUSPENDED);
-    	m.set_migprocess(p);
+    	
     	try {
 			this.writeToServer(m);
 		} catch (IOException e) {
@@ -127,24 +131,46 @@ public class Slave_T {
 
     public void terminate(String cmd)
     {
-    	System.out.println("Terminated cmd:"+cmd);
+    	MigratableProcess p = null;
+    	if (runningpro.containsKey(cmd))
+    		p = runningpro.get(cmd);
+    	else if (suspendedpro.containsKey(cmd))
+    		p = suspendedpro.get(cmd);
+    	if (p != null)
+    	{
+    		p.terminate();
+    		System.out.println("Terminated");
+    	}
+    	
     }
     
-    public Constants.RESULT resume(String cmd, MigratableProcess p)
+    public Constants.RESULT resume(String pid)
     {
-    	if (p == null)
-    	{
-    		System.out.println("Process "+cmd+" has not been launched!"
-    				           + "Please use L <cmd> <param1> <param2> ... to launch the process");
-    		return Constants.RESULT.PROC_NOT_LAUNCHED;
-    	}
-    	else
-    	{
-    		Thread t = new Thread(p);
-    		p.print();
-    		t.start();
-    		return Constants.RESULT.SUCCESS;
-    	}
+    	String fname = "process_"+pid+"_tmp";
+    	
+    	@SuppressWarnings("resource")
+		TransactionalFileInputStream fis = new TransactionalFileInputStream(fname);
+    	
+    	MigratableProcess p;
+		try {
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			p = (MigratableProcess)ois.readObject();
+			ois.close();
+			fis.close();
+			Thread t = new Thread(p);
+	    	p.print();
+	    	t.start();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.out.println("Process "+pid+" has not been launched!"
+			           + "Please use L <cmd> <param1> <param2> ... to launch the process");
+			return Constants.RESULT.PROC_NOT_LAUNCHED;
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}    	
+    	return Constants.RESULT.SUCCESS;
     }
     
     public void report_back(Msg m)
@@ -157,16 +183,17 @@ public class Slave_T {
 	String cmd = msg.get_cmd(); // S:Suspend, L: launch, T:teminate, R:resume
 	String to_ip = msg.get_toip();
 	int to_port = msg.get_toport();
-	MigratableProcess p = msg.get_migprocess();
+	String pid = msg.get_pid();
+	//MigratableProcess p = msg.get_migprocess();
 	// cases
 	if (act.equals("L"))
-		launch(cmd);
+		launch(cmd, pid);
 	else if (act.equals("S"))
-		suspend(cmd);
+		suspend(cmd, pid);
 	else if (act.equals("T"))
-		terminate(cmd);
+		terminate(pid);
 	else if (act.equals("R"))
-		resume(cmd, p);
+		resume(pid);
     }
 
     public void writeToServer(Msg reply) throws IOException {
@@ -174,16 +201,17 @@ public class Slave_T {
     	oos.flush();
     }
     
-    public void read_server(Socket sock) throws IOException, ClassNotFoundException
+    public void read_server() throws IOException, ClassNotFoundException
     {
     	ois = new ObjectInputStream(sock.getInputStream());
     	while (true) { 
-    	    Msg msg = (Msg) ois.readObject();
-    	    //System.out.println("action:"+msg.get_action());
-    	    String intended_slave_id = msg.get_sid();
-    	    String pid = msg.get_pid();
-    	    System.out.println("Slave id:"+intended_slave_id+" Process id:"+pid);  	    
-    	    this.process(msg);  	    
+    			Msg msg = (Msg) ois.readObject();
+    			System.out.println("Got the msg");
+    			//System.out.println("action:"+msg.get_action());   			
+    			this.slave_id = msg.get_sid();
+    			String pid = msg.get_pid();
+    			System.out.println("\nSlave id:"+this.slave_id+" Process id:"+pid);  	    
+    			this.process(msg);  
     	}
     }
 	
@@ -192,9 +220,9 @@ public class Slave_T {
 	    sock = new Socket(this.manager_IP, this.manager_port);	    
 	    oos = new ObjectOutputStream(sock.getOutputStream());
 	    Msg greeting = new Msg("", "","");
-	    greeting.set_status(Constants.Status.IDLE); 
+	    greeting.set_status(Constants.Status.IDLE);
 	    this.writeToServer(greeting);
-	    this.read_server(sock);
+	    this.read_server();
 	    //this.readFromServer(ois, oos);	               
 	} catch (UnknownHostException e) {
 	    // TODO Auto-generated catch block
@@ -202,7 +230,8 @@ public class Slave_T {
 	} catch (IOException e) {
 	    // TODO Auto-generated catch block
 	    e.printStackTrace();
-	}	
+	}
+	
     }
     
     public static void main(String[] args) throws InterruptedException, ClassNotFoundException {

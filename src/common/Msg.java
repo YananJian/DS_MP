@@ -9,7 +9,8 @@ public class Msg implements java.io.Serializable{
 	private int to_port = 0;
 	private Constants.Status status;
 	private String pid = "";
-	private MigratableProcess p = null;
+
+	private Object o = null;
 	
 	public Msg(String act, String cmd, String pid)
 	{
@@ -21,6 +22,11 @@ public class Msg implements java.io.Serializable{
 	public void set_slaveid(String slaveid){
 		this.slave_id = slaveid;
 		
+	}
+	
+	public void set_cmd(String cmd)
+	{
+		this.cmd = cmd;
 	}
 	
 	public void set_to_ip(String ip)
@@ -38,9 +44,9 @@ public class Msg implements java.io.Serializable{
 		this.pid = pid;
 	}
 	
-	public void set_migprocess(MigratableProcess p)
+	public void set_obj(Object o)
 	{
-		this.p = p;
+		this.o = o;
 	}
 	
 	public void set_status(Constants.Status s){
@@ -59,6 +65,11 @@ public class Msg implements java.io.Serializable{
 	public String get_pid()
 	{
 		return this.pid;
+	}
+	
+	public Object get_obj()
+	{
+		return this.o;
 	}
 	
 	public String get_action(){
@@ -80,8 +91,4 @@ public class Msg implements java.io.Serializable{
 		return this.to_port;
 	}
 	
-	public MigratableProcess get_migprocess()
-	{
-		return this.p;
-	}
 }
