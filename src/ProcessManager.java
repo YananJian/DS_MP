@@ -131,8 +131,7 @@ public class ProcessManager{
 			else if (this.suspended_procs.containsKey(msg.get_cmd()))
 				sid = suspended_procs.remove(msg.get_cmd());
 			else if (this.resumed_procs.containsKey(msg.get_cmd()))
-				sid = resumed_procs.remove(msg.get_cmd());
-			
+				sid = resumed_procs.remove(msg.get_cmd());	
 		}
 		else if (msg.get_action().equals("R"))
 		{

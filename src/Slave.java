@@ -9,7 +9,7 @@ import common.*;
 import java.io.*;
 
 
-public class Slave_T {
+public class Slave {
 
     private String slave_id;
     private String manager_IP = common.Constants.IP_MASTER;
@@ -134,17 +134,28 @@ public class Slave_T {
 		}
     }
 
-    public void terminate(String cmd)
+
+	public void terminate(String cmd)
     {
+		System.out.println("Preparing to terminate");
     	MigratableProcess p = null;
-    	if (runningpro.containsKey(cmd))
-    		p = runningpro.get(cmd);
-    	else if (suspendedpro.containsKey(cmd))
-    		p = suspendedpro.get(cmd);
+    	p = runningpro.remove(cmd);
+    	if (p == null)
+    		p = suspendedpro.remove(cmd);
+    	
     	if (p != null)
     	{
     		p.terminate();
     		System.out.println("Terminated");
+    	}
+    	Thread t = suspendedthreads.remove(cmd);
+    	if (t != null)
+    		t.interrupt();
+    	else
+    	{
+    		t = this.runningthreads.remove(cmd);
+    		if (t != null)
+    			t.interrupt();
     	}
     	
     }
@@ -243,7 +254,7 @@ public class Slave_T {
     
     public static void main(String[] args) throws InterruptedException, ClassNotFoundException {
 	// TODO Auto-generated method stub
-	Slave_T slave = new Slave_T();
+	Slave slave = new Slave();
 	slave.set_status(Constants.Status.IDLE);
 	if (slave.argValidate(args)){
 	    slave.manager_IP = args[1].split(":")[0];

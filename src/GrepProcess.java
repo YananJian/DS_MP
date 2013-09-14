@@ -64,7 +64,6 @@ public class GrepProcess implements MigratableProcess
 			System.out.println ("GrepProcess: Error: " + e);
 		}
 
-
 		suspending = false;
 	}
 
