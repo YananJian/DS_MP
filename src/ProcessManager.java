@@ -3,6 +3,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.io.IOException;
 import java.util.concurrent.*;
+
 import common.Constants;
 import common.MigratableProcess;
 import common.Constants.RESULT;
@@ -12,29 +13,23 @@ public class ProcessManager{
 	
 	HashMap<String, String> sid_ipport = new HashMap<String, String>();
 	HashMap<String, String> ipport_sid = new HashMap<String, String>();
-	//private HashMap<String, Constants.Status> sid_status = new HashMap<String, Constants.Status>();
 	HashMap<String, String> pid_cmd = new HashMap<String, String>();
-	private static ProcessManager pm = new ProcessManager();
 	
-	public ConcurrentLinkedQueue<Msg> msgQueue = new ConcurrentLinkedQueue<Msg>();
 	public ConcurrentLinkedQueue<String> sids = new ConcurrentLinkedQueue<String>();
 	public HashMap<String, String>running_procs = new HashMap<String, String>();
 	public HashMap<String, String> suspended_procs = new HashMap<String, String>();
 	public HashMap<String, String> resumed_procs = new HashMap<String, String>();
+	
 	MsgProcessor mp = MsgProcessor.getInstance();
 	CmdProcessor cp = CmdProcessor.getInstance();
+	
+	private static ProcessManager pm = new ProcessManager();
 	
 	private ProcessManager(){}
 	public static synchronized ProcessManager getInstance()
 	{
 		return pm;
 	}
-	/*
-	public void set_sid_status(String sid, Constants.Status status)
-	{
-		this.sid_status.put(sid, status);
-		
-	}*/
 	
 	public boolean argValidate(String [] args){
 		return true;
@@ -79,6 +74,7 @@ public class ProcessManager{
 		return pid;	
 	}
 	
+	
 	public void dispatchMsg(Msg msg)
 	{
 		String sid = this.sids.peek();
@@ -86,12 +82,12 @@ public class ProcessManager{
 		String ip_port = this.sid_ipport.get(sid);		
 		if (sid == null)
 		{
-			System.out.println("No available slaves");
+			System.out.println("Error: No available slaves");
 			return;
 		}
 		if (ip_port == null)
 		{
-			System.out.println("No slaves");
+			System.out.println("Error: No slaves");
 			return;
 		}
 		String ip = ip_port.split(":")[0];
@@ -104,35 +100,55 @@ public class ProcessManager{
 			System.out.println("Cmd+"+msg.get_cmd()+" pid:"+pid);
 			pid_cmd.put(pid, msg.get_cmd());
 			ipport_sid.put(ip_port, sid);
-			System.out.println("*************");
-			System.out.println("Running Process:"+pid);
+			if (running_procs.containsKey(pid))
+			{
+				System.out.println("pid:"+pid+" is running, please launch another one");
+				return;
+			}
 			running_procs.put(pid, sid);
+			System.out.println("*************");
+			System.out.println("Running Process:"+pid);		
 			System.out.println("*************");
 		}
 		else if (msg.get_action().equals("S"))
 		{
-			if (running_procs.containsKey(msg.get_cmd()))
-			{	sid = running_procs.remove(msg.get_cmd());
-				System.out.println("Suspend:"+msg.get_cmd());
-				msg.set_pid(msg.get_cmd());
-				suspended_procs.put(msg.get_cmd(), sid);
-			}
-			else
+			sid = running_procs.remove(msg.get_cmd());
+			if (sid == null)
 			{
-				System.out.println("pid "+msg.get_cmd()+" has not been launched");
-				return;
+				sid = resumed_procs.remove(msg.get_cmd());
+				if (sid == null)
+				{
+					System.out.println("Error: pid "+msg.get_cmd()+" has not been launched");
+					return;
+				}
 			}
+			msg.set_pid(msg.get_cmd());
+			suspended_procs.put(msg.get_cmd(), sid);
+			System.out.println("*************");
+			System.out.println("Suspended Process:"+msg.get_cmd());
+			System.out.println("*************");			
 		}
+		
 		else if (msg.get_action().equals("T"))
 		{
 			msg.set_pid(msg.get_cmd());
+			
 			if (this.running_procs.containsKey(msg.get_cmd()))
 				sid = running_procs.remove(msg.get_cmd());
 			else if (this.suspended_procs.containsKey(msg.get_cmd()))
 				sid = suspended_procs.remove(msg.get_cmd());
 			else if (this.resumed_procs.containsKey(msg.get_cmd()))
-				sid = resumed_procs.remove(msg.get_cmd());	
+				sid = resumed_procs.remove(msg.get_cmd());
+			else
+			{
+				System.out.println("Error: Process does not exist!");
+				return;
+			}
+			System.out.println("*************");
+			System.out.println("Terminated Process:"+msg.get_cmd());
+			System.out.println("*************");			
 		}
+		
 		else if (msg.get_action().equals("R"))
 		{
 				
@@ -140,12 +156,14 @@ public class ProcessManager{
 			String []_tmp = cmd.split(" ");
 			String _sid = this.suspended_procs.remove(msg.get_cmd());
 			String s_ip_port = this.sid_ipport.get(_sid);
-			
+			/* 
+			 * if the input cmd is <cmd> <param1> <param2> ...
+			 * then we have to split the cmd to get the real cmd and the params.
+			 */
 			if (_tmp.length > 1)
 			{
 				cmd = _tmp[0];
 				msg.set_cmd(cmd);
-				System.out.println(suspended_procs.values());
 				if (this.suspended_procs.remove(cmd)==null)
 				{
 					System.out.println("pid:"+cmd+" has not been suspended");
@@ -165,7 +183,7 @@ public class ProcessManager{
 			
 			if (tmp.length>0 && tmp.length< 2)
 			{
-				System.out.println("Please input the valid ip:port");
+				System.out.println("Error, Please input the valid ip:port");
 				return;
 			}
 			else
@@ -181,7 +199,6 @@ public class ProcessManager{
 			System.out.println("****************");
 		}
 		msg.set_slaveid(sid);	
-		System.out.println("SID:"+sid);
 		msg.set_to_ip(ip);
 		msg.set_to_port(port);
 		
@@ -192,6 +209,29 @@ public class ProcessManager{
 			sids.remove(sid);
 			sid_ipport.remove(sid);
 		}
+	}
+	
+	public HashMap<String, String> get_pid_ipports_status(String status)
+	{
+		HashMap<String, String> rpi = new HashMap<String, String>();
+		Iterator<Map.Entry<String, String>> rps = null;
+		
+		if (status.equals("R"))
+			rps = this.running_procs.entrySet().iterator();
+		else if (status.equals("S"))
+			rps = this.suspended_procs.entrySet().iterator();
+		
+		while(rps.hasNext())
+		{
+			Map.Entry pid_sid = (Map.Entry)rps.next();
+			String pid = (String) pid_sid.getKey();
+			String sid = (String) pid_sid.getValue();
+			String ip_port = this.sid_ipport.get(sid);
+			System.out.println(ip_port);
+			rpi.put(pid, ip_port);
+		}
+	
+		return rpi;
 	}
 	
 	public static void main(String[] args) {

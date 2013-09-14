@@ -66,12 +66,14 @@ public class Slave {
 			this.runningthreads.put(pid, t);
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("Error: Can not find the process's .class file");
+			//e.printStackTrace();
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NoSuchMethodException e) {
 			// TODO Auto-generated catch block
+			System.out.println("Error: Can not find the process's method");
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
 			// TODO Auto-generated catch block
@@ -91,7 +93,7 @@ public class Slave {
     public void record(MigratableProcess p, String pid)
     {
     	TransactionalFileOutputStream fs = new TransactionalFileOutputStream(
-    			         						"process_"+pid+"_tmp");
+    			         						"./serialized/process_"+pid+"_tmp");
     	ObjectOutputStream objectStream;
 
 		try {
@@ -162,7 +164,7 @@ public class Slave {
     
     public Constants.RESULT resume(String pid)
     {
-    	String fname = "process_"+pid+"_tmp";
+    	String fname = "./serialized/process_"+pid+"_tmp";
     	
     	@SuppressWarnings("resource")
 		TransactionalFileInputStream fis = new TransactionalFileInputStream(fname);
@@ -201,9 +203,9 @@ public class Slave {
 	String to_ip = msg.get_toip();
 	int to_port = msg.get_toport();
 	String pid = msg.get_pid();
-	//MigratableProcess p = msg.get_migprocess();
+	
 	// cases
-	System.out.println("Slave Got A Msg!");
+	
 	if (act.equals("L"))
 		launch(cmd, pid);
 	else if (act.equals("S"))
