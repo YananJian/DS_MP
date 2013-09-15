@@ -14,7 +14,7 @@ CmdProcessor: CmdProcessor.class
 
 MsgProcessor: MsgProcessor.class
 
-Slave_T: Slave_T.class # TODO: Slave_T -> Slave
+Slave: Slave.class 
 
 GrepProcess: GrepProcess.class
 
@@ -22,7 +22,7 @@ CpFile: CpFile.class
 
 CountLines: CountLines.class
 
-pm: ProcessManager CmdProcessor MsgProcessor Slave_T GrepProcess CpFile CountLines
+pm: ProcessManager CmdProcessor MsgProcessor Slave GrepProcess CpFile CountLines
 	java ProcessManager
 
 clean:
