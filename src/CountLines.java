@@ -43,7 +43,7 @@ public class CountLines implements MigratableProcess{
 					else
 					{
 						out.println(String.valueOf(line_counts));
-						break;
+						//break;
 					}
 									
 					// Make cp take longer so that we can observe the process
@@ -68,12 +68,6 @@ public class CountLines implements MigratableProcess{
 	public void suspend() {
 		// TODO Auto-generated method stub
 		suspending = true;
-		while (suspending){ try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}}
 	}
 
 	@Override

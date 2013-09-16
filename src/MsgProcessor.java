@@ -152,8 +152,6 @@ public class MsgProcessor implements Runnable{
 				Msg m = (Msg) o;
 				if (m.get_sid().equals(""))
 					m.set_slaveid(sid);
-				System.out.println("PID:"+m.get_pid());
-				System.out.println("parsing Msg");
 				this.parseMsg(m);
 								
 			} catch (IOException e) {

@@ -38,9 +38,8 @@ public class CpFile implements MigratableProcess{
 				while (!suspending) {
 					String line = in.readLine();
 
-					if (line == null) break;
-					
-					out.println(line);
+				    if (line != null)	
+						out.println(line);
 					
 					// Make cp take longer so that we don't require extremely large files for interesting results
 					try {
